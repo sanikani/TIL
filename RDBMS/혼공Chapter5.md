@@ -220,3 +220,33 @@ SELECT 열_이름 FROM 뷰_이름
 사용자는 뷰를 테이블이라고 생각하고 접근한다. 그러면 MySQL이 뷰 안에 있는 SELECT를 실행해서 그 결과를 사용자에게 보내주므로 사용자 입장에서는 뷰에서 모두 처리된 것으로 이해한다.
 
 뷰는 수정이 가능할까? 기본적으로 읽기 전용으로 사용되지만, 뷰를 통해서 원본 테이블의 데이터를 수정할 수도 있다. 하지만 무조건 가능한 것은 아니고 몇 가지 조건을 만족해야 한다.
+
+**뷰를 사용하는 이유**
+
+**보안에 도움이 된다**
+
+앞의 예에서 만든 v_member 뷰에는 사용자의 아이디, 이름, 주소만 있을 뿐 사용자의 중요한 개인정보인 연락처, 평균 키 등의 정보는 들어있지 않다. 이런 방식으로 사용자마다 테이블에 접근하는 권한에 차별을 둬서 처리하고 있으며, 사용자별 권한이 데이터베이스 보안의 중요한 주제 중 하나이다.
+
+**복잡한 SQL을 단순하게 만들 수 있다.**
+
+```sql
+SELECT B,mem_id, M.mem_name, B.prod_name, M.addr,
+								CONCAT(M.phone1, M.phone2) '연락처'
+		FROM buy B
+			INNER JOIN member M
+			ON B,mem_id = M.mem_id;
+```
+
+내용이 길고 복잡하다. 이 SQL을 다음과 같이 뷰로 생성해 놓고 사용자들은 해당 뷰에만 접근하도록 하면 복잡한 SQL을 입력할 필요가 없어진다.
+
+```sql
+CREATE VIEW v_memberbuy
+AS
+		SELECT B.mem_id, M.mem_name, B.prod_name, M.addr,
+								CONCAT(M.phone1, M.phone2) '연락처'
+				FROM buy B
+							INNER JOIN member M
+							ON B.mem_id = M.mem_id;
+```
+
+이제부터는 v_memberbuy를 테이블이라 생각하고 접근하면 된다.
