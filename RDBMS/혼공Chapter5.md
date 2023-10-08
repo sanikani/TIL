@@ -250,3 +250,94 @@ AS
 ```
 
 이제부터는 v_memberbuy를 테이블이라 생각하고 접근하면 된다.
+```sql
+SELECT * FROM v_memberbuy WHERE mem_name = '블랙핑크';
+```
+
+### 뷰의 실제 작동
+
+뷰의 단순한 형태에 대해 살펴보았는데, 실무에서는 좀 더 복잡하게 사용한다. 실제로 사용하는 방법을 익혀보자.
+
+**뷰의 실제 생성, 수정, 삭제**
+
+기본적인 뷰를 생성하면서 뷰에 사용될 열 이름을 테이블과 다르게 지정할 수도 있다. 기존에 배운 별칭을 사용하면 되는데, 중간에 띄어쓰기 사용이 가능하다. 별칭은 열 이름 뒤에 작은따옴표 또는 큰따옴표로 묶어주고, 형식상 AS를 붙여준다.
+
+단, 뷰를 조회할 때는 열 이름에 공백이 있으면 백틱(`)으로 묶어줘야 한다.
+
+```sql
+USE market_db;
+CREATE VIEW v_viewtest1
+AS
+			SELECT B.mem_id 'Member ID', M.mem_name AS 'Member Name',
+					B.prod_name "Product Name",
+											CONCAT(M.phone1, M.phone2) AS "office Phone"
+					FROM buy B
+								INNER JOIN member M
+								ON B.mem_id = M.mem_id;
+SELECT DISTINCT `Member ID`, `Member Name` FROM v_viewtest1; ->백틱 사용
+```
+
+뷰의 수정은 ALTER VIEW 구문을 사용하며, 열 이름에 한글을 사용해도 된다.
+
+```sql
+ALTER VIEW v_viewtest1
+AS
+			SELECT B.mem_id '회원 아이디', M.mem_name AS '회원 이름',
+					B.prod_name "제품 이름",
+											CONCAT(M.phone1, M.phone2) AS "연락처"
+					FROM buy B
+								INNER JOIN member M
+								ON B.mem_id = M.mem_id;
+SELECT DISTINCT `회원 아이디`, `회원 이름` FROM v_viewtest1; ->백틱 사용
+```
+
+<aside>
+💡 열 이름에 한글을 사용하는 것은 권장하지 않는다.
+
+</aside>
+
+뷰의 삭제는 DROP VIEW를 사용한다.
+**뷰의 정보 확인**
+
+기존에 생성된 뷰에 대한 정보를 확인할 수 있다.
+
+```sql
+USE market_db;
+CREATE OR REPLACE VIEW v_viewtest2
+AS
+			SELECT mem_id. mem_name, addr FROM member;
+```
+
+DESCRIBE 문으로 기존 뷰의 정보를 확인할  수 있다.
+
+```sql
+describe v_viewtest2;
+```
+
+뷰도 테이블과 동일하게 정보를 보여준다. 주의할 점은 PK 등의 정보는 확인되지 않는다.
+
+SHOW CREATE VIEW 문으로 뷰의 소스 코드도 확인할 수있다.
+
+```sql
+SHOW CREATE VIEW v_viewtest2;
+```
+
+**뷰를 통한 데이터의 수정/삭제**
+
+뷰를 통해서 테이블의 데이터를 수정할 수도 있다. v_member 뷰를 통해 데이터를 수정해보자.
+
+```sql
+UPDATE v_member SET addr = '부산' WHERE mem_id='BLK';
+```
+
+이번에는 데이터를 입력해보자.
+
+```sql
+insert into v_member(mem_id, mem_name, addr) values('BTS', '방탄소년단','경기');
+```
+
+Error Code: 1423. Field of view 'market_db.v_member' underlying table doesn't have a default value	
+
+v_member(뷰)가 참조하는 member의 열 중에서 mem_number 열은 NOT NULL로 설정되어서 반드시 입력해줘야 한다. 하지만 뷰에서는 mem_number 열을 참조하고 있지 않으므로 값을 입력할 방법이 없다. 만약 v_member 뷰를 통해서 member 테이블에 값을 입력하고 싶다면 v_member에 mem_number 열을 포함하도록 뷰를 재정의하거나, 아니면 member에서 mem_number 열의 속성을 ULL로 바꾸거나, 기본값을 지정해야 한다.
+
+이번에는 지정한 범위로 뷰를 생성해보자. 평균 키가 167 이상인 뷰를 생성한다.
