@@ -341,3 +341,62 @@ Error Code: 1423. Field of view 'market_db.v_member' underlying table doesn't ha
 v_member(뷰)가 참조하는 member의 열 중에서 mem_number 열은 NOT NULL로 설정되어서 반드시 입력해줘야 한다. 하지만 뷰에서는 mem_number 열을 참조하고 있지 않으므로 값을 입력할 방법이 없다. 만약 v_member 뷰를 통해서 member 테이블에 값을 입력하고 싶다면 v_member에 mem_number 열을 포함하도록 뷰를 재정의하거나, 아니면 member에서 mem_number 열의 속성을 ULL로 바꾸거나, 기본값을 지정해야 한다.
 
 이번에는 지정한 범위로 뷰를 생성해보자. 평균 키가 167 이상인 뷰를 생성한다.
+```sql
+create view v_height167
+as
+		select * from member where height >= 167;
+	
+select * from v_height167;
+```
+
+이번에는 v_height167 뷰에서 키가 167 미만인 데이터를 입력해보자.
+
+```sql
+insert into v_height167 values('TRA','티아라','6','서울',null,null,159,'2005-01-01');
+```
+
+일단 입력은 된다. 그런데 v_height167 뷰는 167 이상만 보이도록 만든 뷰인데, 167 미만인 데이터가 입력되었다. 뷰의 데이터를 확인해보면 방금 입력한 데이터는 보이지 않는다. 이를 보면 이 뷰에서 키가 159인 데이터를 입력한 것은 별로 바람직해 보이지 않는다. 즉, 예상치 못한 경로를 통해서 입력되면 안 되는 데이터가 입력된 듯한 느낌이다. 키가 167 이상인 뷰이므로 167 이상의 데이터만 입력되도록 하는 것이 논리적으로 바람직하다.
+
+이럴 때 예약어 WITH CHECK OPTION을 통해 뷰에 설정된 값의 범위가 벗어나는 값은 입력되지 않도록 할 수 있다.
+
+```sql
+alter view v_height167
+as
+		select * from member where height >= 167
+				with check option;
+```
+
+이제 키가 167 미만인 데이터는 입력되지 않고, 167 이상의 데이터만 입력된다. 이러한 방식이 좀 더 합리적이다.
+
+**단순 뷰와 복합 뷰**
+
+하나의 테이블로 만든 뷰를 단순 뷰라 하고, 두 개 이상의 테이블로 만든 뷰를 복합 뷰라고 한다. 복합 뷰는 주로 두 테이블을 조인한 결과를 뷰로 만들 때 사용한다. 복합 뷰의 예는 다음과 같다.
+
+```sql
+create view v_complex
+as
+		select B.mem_id, M.mem_name, B.prod_name, M.addr
+			from buy B
+				INNER JOIN member M
+                ON B.mem_id = M.mem_id;
+```
+
+복합 뷰는 읽기 전용이다. 복합 뷰를 통해 테이블에 데이터를 입력, 수정, 삭제할 수 없다.
+
+**뷰가 참조하는 테이블의 삭제**
+
+뷰가 참조하는 테이블을 삭제해보자
+
+```sql
+drop table if exists buy, member;
+```
+
+현재 여러 개의 뷰가 두 테이블과 관련이 있는데도 테이블이 삭제되었다. 두 테이블 중 아무거나 연관되는 뷰를 다시 조회해보자.
+
+```sql
+select * from v_height167;
+```
+
+당연히 참조하는 테이블이 없기 때문에 조회할 수없다는 메시지가 나온다. 바람직하지는 않지만, 관련 뷰가 있더라도 테이블은 쉽게 삭제된다.
+
+뷰가 조회되지 않으면 check table 문으로 뷰의 상태를 확인해볼 수 있다. 뷰가 참조하는 테이블이 없어서 오류가 발생하는 것을 확인할 수 있다.
