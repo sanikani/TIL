@@ -2,6 +2,7 @@
 ## Spring
 * MVC
     * [MVC 1편 강의 정리](/Spring/MVC/mvc1/목차.md)
+    * [MVC 2편 강의 정리](/Spring/MVC/mvc2/목차.md)
 * Spring DB
     * [Spring DB 1편 강의 정리](/Spring/SpringDB1/목차.md)
 ## RDBMS
